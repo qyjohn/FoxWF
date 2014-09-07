@@ -1,0 +1,2 @@
+1. Handle MQ message lost when worker dies
+2. Handle running job when worker dies
