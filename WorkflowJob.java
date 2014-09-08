@@ -3,7 +3,7 @@ import java.util.HashSet;
 public class WorkflowJob
 {
 	public String jobId, jobName, jobCommand;	// job id and job name
-	public HashSet<String>	inputFiles, pendingInputFiles, outputFiles;
+	public HashSet<String>	parentJobs, childrenJobs;
 	public boolean ready;
 
 	/**
@@ -17,11 +17,10 @@ public class WorkflowJob
 		jobId = id;
 		jobName = name;
 		jobCommand = name;
-		inputFiles = new HashSet<String>();
-		pendingInputFiles = new HashSet<String>();
-		outputFiles = new HashSet<String>();
+		parentJobs = new HashSet<String>();
+		childrenJobs = new HashSet<String>();
 		
-		// By default this job is ready to go, unless we find out that file dependencies are not met
+		// By default this job is ready to go, unless we find out that it has parents!
 		ready = true;
 	}
 	
@@ -38,57 +37,45 @@ public class WorkflowJob
 	}
 	
 	
-	/**
-	 *
-	 * Add an input file dependency
-	 *
-	 */
 	 
-	public void addInputFile(String filename)
-	{
-		inputFiles.add(filename);
-	}
-	
 	/**
 	 *
-	 * If a file is not yet available, add it to the pending input file set.
+	 * Add a child to the job
 	 *
 	 */
 
-	public void addPendingInputFile(String filename)
+	public void addChild(String child_id)
 	{
-		pendingInputFiles.add(filename);
+		childrenJobs.add(child_id);
+	}
+
+	/**
+	 *
+	 * Add a parent to the job
+	 *
+	 */
+
+	public void addParent(String parent_id)
+	{
+		parentJobs.add(parent_id);
 		ready = false;
 	}
 	
 	/**
 	 *
-	 * During the execution of the workflow, we remove a file from the pending input file set when the file becomes available.
-	 * This is usually trigger by the completion of a job, which produces the file.
-	 *
-	 * When this set becomes empty, it means that all the input files for this job are now available, and the job is ready to go.
+	 * Remove a parent from the job
 	 *
 	 */
-	 
-	public void removePendingInputFile(String filename)
+
+	public void removeParent(String parent_id)
 	{
-		pendingInputFiles.remove(filename);	
-		if (pendingInputFiles.isEmpty())
+		parentJobs.remove(parent_id);
+		if (parentJobs.isEmpty())
 		{
 			ready = true;
 		}
 	}
-	
-	/**
-	 *
-	 * Add an output file. When the job has finished execution, we will update all the status of these files. 
-	 *
-	 */
-	 
-	public void addOutputFile(String filename)
-	{
-		outputFiles.add(filename);
-	}
+
 	
 	/**
 	 * 
@@ -109,15 +96,7 @@ public class WorkflowJob
 		}
 		
 		str = str + "\n    " + jobCommand;
-		 
-		for (String file : inputFiles) 
-		{
-			str = str + "\n    " + file;
-			if (pendingInputFiles.contains(file))
-			{
-				str = str + "\t (pending)";
-			}
-		}
+
 		return str;
 	}
 	

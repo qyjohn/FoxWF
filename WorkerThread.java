@@ -61,6 +61,7 @@ public class WorkerThread extends Thread
 			p.waitFor();
 			runningJobs.remove(jobId);
 			p=null;
+//			System.out.println(result);
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());

@@ -115,23 +115,19 @@ public class WorkflowScheduler
 		System.out.println(uuid + ":\t" + id + " is complete.");
 		// Get the current job with job id
 		WorkflowJob job = wf.runningJobs.get(id);
-		// Get a list of the output files
-		for (String file : job.outputFiles) 
+		
+		// Get a list of the children files
+		for (String child_id : job.childrenJobs) 
 		{
 			// Get a list of the jobs depending on a particular output file
-			if (wf.inoutFiles.get(file) != null)
+			WorkflowJob childJob = wf.initialJobs.get(child_id);
+			// Remove this depending parent job
+			childJob.removeParent(id);
+			if (childJob.ready)
 			{
-				for (String dependingJobId : wf.inoutFiles.get(file).jobs)
-				{
-					WorkflowJob dependingJob = wf.initialJobs.get(dependingJobId);
-					dependingJob.pendingInputFiles.remove(file);
-					if (dependingJob.pendingInputFiles.isEmpty())
-					{
-						// No more pending input files, this job is now ready to go
-						System.out.println(uuid + ":\t" + dependingJob.jobId + " is now ready to go. Dispatching...");
-						dispatchJob(dependingJob.jobId);
-					}
-				}
+				// No more pending input files, this job is now ready to go
+				System.out.println(uuid + ":\t" + childJob.jobId + " is now ready to go. Dispatching...");
+				dispatchJob(childJob.jobId);
 			}
 		}
 		

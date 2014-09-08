@@ -16,18 +16,18 @@ public class Workflow
 {
 
 	HashMap<String, WorkflowJob> initialJobs, queueJobs, runningJobs, completeJobs;
-	HashMap<String, WorkflowFile> inputFiles, inoutFiles, outputFiles;
 	String projectDir;
 	
+	/**
+	 *
+	 * Constructor
+	 *
+	 */
+	 
 	public Workflow(String dir)
 	{
 		try
 		{
-			// Initialize the HashMap for workflow files
-			inputFiles = new HashMap<String, WorkflowFile>();
-			inoutFiles = new HashMap<String, WorkflowFile>();
-			outputFiles = new HashMap<String, WorkflowFile>();
-			
 			// Initialize the HashMap for workflow jobs
 			initialJobs = new HashMap<String, WorkflowJob>();
 			queueJobs = new HashMap<String, WorkflowJob>();
@@ -60,46 +60,54 @@ public class Workflow
 	}
 	
 	
+	/**
+	 *
+	 * Parse jobs and job dependencies
+	 *
+	 */
+	 
 	public void parseWorkflow(Document doc)
 	{
-		List<Element> files = doc.getRootElement().elements("filename");
 		List<Element> jobs = doc.getRootElement().elements("job");
-		for(Element file : files) 
-		{
-			prepareFile(file);
-		}
+		List<Element> children = doc.getRootElement().elements("child");
+
 		for(Element job : jobs) 
 		{
 			prepareJob(job);
 		}
+		for(Element child : children) 
+		{
+			prepareChild(child);
+		}
 	}
+	
 	
 	/**
 	 *
+	 * Parse the dependencies of a job
 	 *
 	 */
 	 
-	public void prepareFile(Element file)
+	public void prepareChild(Element child)
 	{
-		String filename = file.attribute("file").getValue();
-		String link = file.attribute("link").getValue();	// file type, can be 'input', 'output' or 'inout'
+		String child_id = child.attribute("ref").getValue();
+		List<Element> parents = child.elements("parent");
 		
-		WorkflowFile wlf = new WorkflowFile(filename);
-		if (link.equals("input"))
+		for (Element parent: parents)
 		{
-			inputFiles.put(filename, wlf);
-		}
-		else if (link.equals("inout"))
-		{
-			inoutFiles.put(filename, wlf);
-		}
-		else if (link.equals("output"))
-		{
-			outputFiles.put(filename, wlf);
+			String parent_id = parent.attribute("ref").getValue();
+			initialJobs.get(child_id).addParent(parent_id);
+			initialJobs.get(parent_id).addChild(child_id);
 		}
 	}
+
 	
-	
+	/**
+	 *
+	 * Parse a job, extract job name (command) and command line arguments
+	 *
+	 */
+	 
 	public void prepareJob(Element job)
 	{
 		String id = job.attribute("id").getValue();
@@ -124,87 +132,7 @@ public class Workflow
 				}
             }
 		}
-		
-		List<Element> uses = job.elements("uses");
-		for(Element use : uses) 
-		{
-			String filename = use.attribute("file").getValue();
-			String link = use.attribute("link").getValue();	// file type, can be 'input', 'output' or 'inout'
-			
-			if (link.equals("input"))
-			{
-				// Filter out executable files, these should be prepared by user rather than job scheduler
-				String type = "data";
-				if (use.attribute("type") != null)
-				{
-					type = use.attribute("type").getValue();
-				}
-				
-				if (type.equals("data"))
-				{
-					wlj.addInputFile(filename);
-					if (inoutFiles.containsKey(filename))
-					{
-						wlj.addPendingInputFile(filename);
-						inoutFiles.get(filename).addJob(id);
-					}
-				}
-			}
-			else if (link.equals("output"))
-			{
-				wlj.addOutputFile(filename);
-			}
-		}
-		
+	
 		initialJobs.put(id, wlj);
 	}
-	
-	public void listFiles()
-	{
-		for (WorkflowFile file : inoutFiles.values()) 
-		{
-			System.out.println(file);
-		}
-	}
-
-	public void listJobs(String type)
-	{
-		if (type.equals("initial"))
-		{
-			for (WorkflowJob job : initialJobs.values()) 
-			{
-				System.out.println(job);
-			}
-		}
-		else if (type.equals("queue"))
-		{
-			for (WorkflowJob job : queueJobs.values()) 
-			{
-				System.out.println(job);
-			}
-		}
-		else if (type.equals("running"))
-		{
-			for (WorkflowJob job : runningJobs.values()) 
-			{
-				System.out.println(job);
-			}
-		}
-		else if (type.equals("complete"))
-		{
-			for (WorkflowJob job : completeJobs.values()) 
-			{
-				System.out.println(job);
-			}
-		}
-	}
-	
-	public static void main(String args[])
-	{
-		Workflow wf = new Workflow("/data/2.0_Montage");
-		wf.listFiles();
-		wf.listJobs("initial");
-	}
-
-	
 }
