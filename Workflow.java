@@ -17,6 +17,7 @@ public class Workflow
 
 	HashMap<String, WorkflowJob> initialJobs, queueJobs, runningJobs, completeJobs;
 	String projectDir;
+	int timeout;
 	
 	/**
 	 *
@@ -24,8 +25,9 @@ public class Workflow
 	 *
 	 */
 	 
-	public Workflow(String dir)
+	public Workflow(String dir, int t)
 	{
+		timeout = t;
 		try
 		{
 			// Initialize the HashMap for workflow jobs
@@ -35,9 +37,10 @@ public class Workflow
 			completeJobs = new HashMap<String, WorkflowJob>();
 
 			projectDir = dir;
-			String fullPath = "file:///" + projectDir + "/dag.xml";
-			Document doc = parseDocument(fullPath);
-			parseWorkflow(doc);			
+			String timePath = "file:///" + projectDir + "/timeout.xml";	// timeout definition for jobs
+			String fullPath = "file:///" + projectDir + "/dag.xml";		// workflow DAG
+			Document job_doc = parseDocument(fullPath);
+			parseWorkflow(job_doc);			
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());	
@@ -113,7 +116,7 @@ public class Workflow
 		String id = job.attribute("id").getValue();
 		String name = job.attribute("name").getValue();
 		
-		WorkflowJob wlj = new WorkflowJob(id, name);
+		WorkflowJob wlj = new WorkflowJob(id, name, timeout);
 		Element args = job.element("argument");
 		for ( int i = 0, size = args.nodeCount(); i < size; i++ )
 		{

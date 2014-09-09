@@ -6,16 +6,18 @@ public class WorkflowScheduler
 	FoxDB database;
 	Workflow wf;
 	PushMQ mq;
+	int timeout;
 	String uuid, projectPath;
 	
-	public WorkflowScheduler(FoxDB db, String id, PushMQ m, String path)
+	public WorkflowScheduler(FoxDB db, String id, PushMQ m, String path, int t)
 	{
 		database = db;
 		uuid = id;
 		projectPath = path;
 		mq = m;
+		timeout = t;
 		
-		wf = new Workflow(path);
+		wf = new Workflow(path, timeout);
 		for (WorkflowJob job : wf.initialJobs.values()) 
 		{
 			// Register the job to the database
@@ -69,14 +71,12 @@ public class WorkflowScheduler
 	{
 		// Get the job from the initialJobs HashSet
 		WorkflowJob job = wf.initialJobs.get(id);
+		wf.queueJobs.put(job.jobId, job);	
+		wf.initialJobs.remove(id);		
 
 		// Publish the job to the queueJobs MQ, and move the job to the queueJobs HashSet
 		String jobInfo = createJobInfo(job.jobId, job.jobCommand);
 		mq.pushMQ(jobInfo);
-		wf.queueJobs.put(job.jobId, job);	
-				
-		// Remove the job from the initialJobs HashSet
-		wf.initialJobs.remove(id);		
 	}
 	
 	
@@ -91,6 +91,7 @@ public class WorkflowScheduler
 	{
 		System.out.println(uuid + ":\t" + id + " is running on worker " + worker + ".");
 		WorkflowJob job = wf.queueJobs.get(id);
+		job.start_time = System.currentTimeMillis() / 1000L;	// This is when this particular job is started, need this for job execution timeout
 		wf.runningJobs.put(id, job);
 		wf.queueJobs.remove(id);
 		
@@ -116,7 +117,7 @@ public class WorkflowScheduler
 		// Get the current job with job id
 		WorkflowJob job = wf.runningJobs.get(id);
 		
-		// Get a list of the children files
+		// Get a list of the children jobs
 		for (String child_id : job.childrenJobs) 
 		{
 			// Get a list of the jobs depending on a particular output file
@@ -145,6 +146,30 @@ public class WorkflowScheduler
 			database.update_workflow(uuid, "completed");
 		}
 	}
+	
+	
+	/**
+	 *
+	 * After a worker takes a particular job for a certain time, but does not ACK this job as complete, the
+	 * job is considered as "timeout". Need to dispatch the job again so that another worker node can process
+	 * it a second time.
+	 *
+	 * Remove the job from the runningJobs HashMap, need to pushMQ, and put it back to the queueJobs HashMap.
+	 *
+	 */
+	 
+	public synchronized void handleJobTimeout(String id)
+	{
+		// Move the job from runningJobs HashMap to queueJobs HashMap
+		WorkflowJob job = wf.runningJobs.get(id);
+		wf.queueJobs.put(id, job);
+		wf.runningJobs.remove(id);
+
+		// Publish a second message to the Job MQ
+		String jobInfo = createJobInfo(job.jobId, job.jobCommand);
+		mq.pushMQ(jobInfo);			
+	}
+	
 	
 	/**
 	 *

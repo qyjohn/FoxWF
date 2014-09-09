@@ -18,6 +18,7 @@ public class PushMQ
 			connection = factory.newConnection();
 			channel = connection.createChannel();	  		  
 			channel.queueDeclare(mq_name, false, false, false, null);
+			channel.txSelect();
 	  } catch (Exception e)
 	  {
 		  System.out.println(e.getMessage());
@@ -26,11 +27,15 @@ public class PushMQ
 		
 	}
 
-	public void pushMQ(String msg)
+	// Multiple threads will need tpu pushMQ
+	
+	public synchronized void pushMQ(String msg)
 	{		
 		try
 		{
-			channel.basicPublish("", mq_name, null, msg.getBytes());
+			channel.basicPublish("", mq_name, MessageProperties.PERSISTENT_BASIC, msg.getBytes());
+			channel.txCommit();
+//			channel.basicPublish("", mq_name, null, msg.getBytes());
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());

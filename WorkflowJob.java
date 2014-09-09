@@ -5,6 +5,8 @@ public class WorkflowJob
 	public String jobId, jobName, jobCommand;	// job id and job name
 	public HashSet<String>	parentJobs, childrenJobs;
 	public boolean ready;
+	long start_time = 1L;	// default start time, indicating the job has not been started
+	int timeout = 1;
 
 	/**
 	 *
@@ -12,13 +14,14 @@ public class WorkflowJob
 	 *
 	 */
 
-	public WorkflowJob(String id, String name)
+	public WorkflowJob(String id, String name, int t)
 	{
 		jobId = id;
 		jobName = name;
 		jobCommand = name;
 		parentJobs = new HashSet<String>();
 		childrenJobs = new HashSet<String>();
+		timeout = t;
 		
 		// By default this job is ready to go, unless we find out that it has parents!
 		ready = true;

@@ -17,7 +17,8 @@ public class FoxServer
 			prop.load(inputStream);
 
 			// Get the properties
-			int cpu_factor = Integer.parseInt(prop.getProperty("cpu_factor"));
+			int cpu_factor  = Integer.parseInt(prop.getProperty("cpu_factor"));
+			int job_timeout = Integer.parseInt(prop.getProperty("job_timeout"));
 			String secret = prop.getProperty("secret");
 			String db_hostname = prop.getProperty("db_hostname");
 			String db_username = prop.getProperty("db_username");
@@ -41,8 +42,12 @@ public class FoxServer
 	    	FoxDB db = new FoxDB(db_hostname, db_username, db_password, db_database);
 	    	
 	    	// Waiting for projects to be submitted through PrjMQ
-	    	PrjMQ prj = new PrjMQ(allWorkflows, db, jmq);
+	    	PrjMQ prj = new PrjMQ(allWorkflows, db, jmq, job_timeout);
 	    	prj.start();
+	    	
+	    	// Checking job timeouts
+	    	WorkflowTimeoutChecking timeout_checking = new WorkflowTimeoutChecking(allWorkflows, job_timeout);
+	    	timeout_checking.start();
 
 			while (true)
 			{

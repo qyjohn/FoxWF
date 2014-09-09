@@ -101,7 +101,6 @@ public class FoxWorker
 						Thread.sleep(10);
 					}					
 					// Get next task and execute
-//					worker.execTask(worker.getTask());
 					worker.execTask(worker.getTask());
 					
 				} catch (Exception e1)

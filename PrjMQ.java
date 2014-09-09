@@ -6,7 +6,8 @@ public class PrjMQ extends Thread
 {
 	PullMQ pmq;		// Project MQ
 	PushMQ jmq;		// Job MQ
-	FoxDB database;
+	FoxDB database;	// Workflow database
+	int timeout;	// Job timeout setting
 	HashMap<String, WorkflowScheduler> allWorkflows;
 	
 	/**
@@ -20,11 +21,12 @@ public class PrjMQ extends Thread
 	 *
 	 */
 	 
-	public PrjMQ(HashMap<String, WorkflowScheduler> wf, FoxDB db, PushMQ mq)
+	public PrjMQ(HashMap<String, WorkflowScheduler> wf, FoxDB db, PushMQ mq, int t)
 	{
 		allWorkflows = wf;
 		database = db;
 		jmq = mq;
+		timeout = t;
 		pmq = new PullMQ("localhost", JobMQ.SIMPLE_WORKFLOW_PRJ_MQ);
 	}
 
@@ -53,7 +55,7 @@ public class PrjMQ extends Thread
 				// Create a new workflow scheduler to 	
 		    	String uuid = UUID.randomUUID().toString();
 		    	database.add_workflow(uuid, name, path);
-				WorkflowScheduler scheduler = new WorkflowScheduler(database, uuid, jmq, path);
+				WorkflowScheduler scheduler = new WorkflowScheduler(database, uuid, jmq, path, timeout);
 				allWorkflows.put(uuid, scheduler);
 				database.update_workflow(uuid, "started");
 				scheduler.initialDispatch();
