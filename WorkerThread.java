@@ -1,4 +1,5 @@
 import java.io.*;
+import org.dom4j.*;
 import java.util.HashSet;
 
 
@@ -11,20 +12,27 @@ public class WorkerThread extends Thread
 	PushMQ amq;
 	
 	
-	public WorkerThread(PushMQ mq, String w, HashSet<String> running, int max_thread, String proj, String path, String id, String command)
+//	public WorkerThread(PushMQ mq, String w, HashSet<String> running, int max_thread, String proj, String path, String id, String command)
+	public WorkerThread(PushMQ mq, String w, HashSet<String> running, int max_thread, Element job)
 	{
 		amq = mq;
 		worker = w;
 		runningJobs = running;
 		max_omp_thread = max_thread;
 		
+		project = job.attribute("project").getValue();
+		projectPath = job.attribute("path").getValue();
+		jobId = job.attribute("id").getValue();
+		jobCommand = job.element("command").getText().trim();
+
+/*
 		project = proj;
 		projectPath = path;
 		jobId = id;
 		jobCommand = command;
-		
-		fullCommand = path + "/bin/" + command.trim();
-		workDir = path + "/workdir";
+*/		
+		fullCommand = projectPath + "/bin/" + jobCommand;
+		workDir = projectPath + "/workdir";
 		
 	}
 	
@@ -78,8 +86,8 @@ public class WorkerThread extends Thread
 		try
 		{			
 			// Send out ACK message, indicating that this job is running.
-			ackInfo = "<ack project='" + project +"' id='" + jobId + "' status='running' worker='" + worker + "'/>";
-			amq.pushMQ(ackInfo);
+//			ackInfo = "<ack project='" + project +"' id='" + jobId + "' status='running' worker='" + worker + "'/>";
+//			amq.pushMQ(ackInfo);
 	
 			System.out.println(project + ":\t" + jobId);
 			System.out.println(projectPath + "/bin/" + jobCommand);

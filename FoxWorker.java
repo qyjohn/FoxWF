@@ -9,6 +9,7 @@ public class FoxWorker
 {
 	PushMQ amq;	// ACK MQ
 	PullMQ jmq;	// JOB MQ
+	WorkerPullJob wpj;
 
 	HashSet<String> runningJobs;
 	String server, worker;
@@ -21,8 +22,9 @@ public class FoxWorker
 			server = s;
 			worker = Inet4Address.getLocalHost().getHostAddress();
 			
-			jmq = new PullMQ(server, FoxParam.SIMPLE_WORKFLOW_JOB_MQ);
+//			jmq = new PullMQ(server, FoxParam.SIMPLE_WORKFLOW_JOB_MQ);
 			amq = new PushMQ(server, FoxParam.SIMPLE_WORKFLOW_ACK_MQ);
+			wpj = new WorkerPullJob(server, worker, FoxParam.SIMPLE_WORKFLOW_JOB_MQ, amq);
 	
 			max_cpu = cpu;
 			max_thread = thread;
@@ -34,18 +36,19 @@ public class FoxWorker
 		}
 	}
 	
-	public String getTask()
+/*	public String getTask()
 	{
 		String msg = jmq.pullMQ();
 		
 		return msg;
 	}
-	
-	public synchronized void execTask(String msg)
+*/	
+	public synchronized void execTask()
 	{
 		try
 		{
-			Element job = DocumentHelper.parseText(msg).getRootElement();
+//			Element job = DocumentHelper.parseText(msg).getRootElement();
+			Element job = wpj.pullJob();	
 			String project = job.attribute("project").getValue();
 			String path = job.attribute("path").getValue();
 			String jobId = job.attribute("id").getValue();
@@ -54,7 +57,8 @@ public class FoxWorker
 			// Add the current running task to local runningJobs HashSet
 			runningJobs.add(jobId);
 			// Start a new thread to run the task
-			new WorkerThread(amq, worker, runningJobs, max_cpu, project, path, jobId, command).start();	
+//			new WorkerThread(amq, worker, runningJobs, max_cpu, project, path, jobId, command).start();	
+			new WorkerThread(amq, worker, runningJobs, max_cpu, job).start();	
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());
@@ -101,7 +105,8 @@ public class FoxWorker
 						Thread.sleep(10);
 					}					
 					// Get next task and execute
-					worker.execTask(worker.getTask());
+//					worker.execTask(worker.getTask());
+					worker.execTask();
 					
 				} catch (Exception e1)
 				{

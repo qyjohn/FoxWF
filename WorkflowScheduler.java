@@ -70,13 +70,16 @@ public class WorkflowScheduler
 	public synchronized void dispatchJob(String id)
 	{
 		// Get the job from the initialJobs HashSet
-		WorkflowJob job = wf.initialJobs.get(id);
-		wf.queueJobs.put(job.jobId, job);	
-		wf.initialJobs.remove(id);		
-
-		// Publish the job to the queueJobs MQ, and move the job to the queueJobs HashSet
-		String jobInfo = createJobInfo(job.jobId, job.jobCommand);
-		mq.pushMQ(jobInfo);
+		if (wf.initialJobs.containsKey(id))
+		{
+			WorkflowJob job = wf.initialJobs.get(id);
+			wf.queueJobs.put(job.jobId, job);	
+			wf.initialJobs.remove(id);		
+	
+			// Publish the job to the queueJobs MQ, and move the job to the queueJobs HashSet
+			String jobInfo = createJobInfo(job.jobId, job.jobCommand);
+			mq.pushMQ(jobInfo);			
+		}
 	}
 	
 	
@@ -89,14 +92,17 @@ public class WorkflowScheduler
 	 
 	public synchronized void setJobAsRunning(String id, String worker)
 	{
-		System.out.println(uuid + ":\t" + id + " is running on worker " + worker + ".");
-		WorkflowJob job = wf.queueJobs.get(id);
-		job.start_time = System.currentTimeMillis() / 1000L;	// This is when this particular job is started, need this for job execution timeout
-		wf.runningJobs.put(id, job);
-		wf.queueJobs.remove(id);
-		
-		// Update the job status in the database
-		database.update_job_running(uuid, id, worker);
+		if (wf.queueJobs.containsKey(id))
+		{
+			System.out.println(uuid + ":\t" + id + " is running on worker " + worker + ".");
+			WorkflowJob job = wf.queueJobs.get(id);
+			job.start_time = System.currentTimeMillis() / 1000L;	// This is when this particular job is started, need this for job execution timeout
+			wf.runningJobs.put(id, job);
+			wf.queueJobs.remove(id);
+			
+			// Update the job status in the database
+			database.update_job_running(uuid, id, worker);
+		}
 	}
 	
 	
@@ -113,37 +119,40 @@ public class WorkflowScheduler
 	 
 	public synchronized void setJobAsComplete(String id, String worker)
 	{		
-		System.out.println(uuid + ":\t" + id + " is complete.");
-		// Get the current job with job id
-		WorkflowJob job = wf.runningJobs.get(id);
-		
-		// Get a list of the children jobs
-		for (String child_id : job.childrenJobs) 
+		if (wf.runningJobs.containsKey(id))
 		{
-			// Get a list of the jobs depending on a particular output file
-			WorkflowJob childJob = wf.initialJobs.get(child_id);
-			// Remove this depending parent job
-			childJob.removeParent(id);
-			if (childJob.ready)
+			System.out.println(uuid + ":\t" + id + " is complete.");
+			// Get the current job with job id
+			WorkflowJob job = wf.runningJobs.get(id);
+			
+			// Get a list of the children jobs
+			for (String child_id : job.childrenJobs) 
 			{
-				// No more pending input files, this job is now ready to go
-				System.out.println(uuid + ":\t" + childJob.jobId + " is now ready to go. Dispatching...");
-				dispatchJob(childJob.jobId);
+				// Get a list of the jobs depending on a particular output file
+				WorkflowJob childJob = wf.initialJobs.get(child_id);
+				// Remove this depending parent job
+				childJob.removeParent(id);
+				if (childJob.ready)
+				{
+					// No more pending input files, this job is now ready to go
+					System.out.println(uuid + ":\t" + childJob.jobId + " is now ready to go. Dispatching...");
+					dispatchJob(childJob.jobId);
+				}
 			}
-		}
-		
-		// Update the job status in the database
-		database.update_job_completed(uuid, id);
-		
-		// Move the job from runningJobs HashMap to completeJobs HashMap
-		wf.completeJobs.put(id, job);
-		wf.runningJobs.remove(id);
-		
-		// Check if the workflow is completed
-		if ((wf.initialJobs.size() == 0) && (wf.queueJobs.size() == 0) && (wf.runningJobs.size() == 0))
-		{				
-			System.out.println(uuid + ":\t" +  "[COMPLETED]");
-			database.update_workflow(uuid, "completed");
+			
+			// Update the job status in the database
+			database.update_job_completed(uuid, id);
+			
+			// Move the job from runningJobs HashMap to completeJobs HashMap
+			wf.completeJobs.put(id, job);
+			wf.runningJobs.remove(id);
+			
+			// Check if the workflow is completed
+			if ((wf.initialJobs.size() == 0) && (wf.queueJobs.size() == 0) && (wf.runningJobs.size() == 0))
+			{				
+				System.out.println(uuid + ":\t" +  "[COMPLETED]");
+				database.update_workflow(uuid, "completed");
+			}
 		}
 	}
 	
@@ -161,13 +170,16 @@ public class WorkflowScheduler
 	public synchronized void handleJobTimeout(String id)
 	{
 		// Move the job from runningJobs HashMap to queueJobs HashMap
-		WorkflowJob job = wf.runningJobs.get(id);
-		wf.queueJobs.put(id, job);
-		wf.runningJobs.remove(id);
-
-		// Publish a second message to the Job MQ
-		String jobInfo = createJobInfo(job.jobId, job.jobCommand);
-		mq.pushMQ(jobInfo);			
+		if (wf.runningJobs.containsKey(id))
+		{
+			WorkflowJob job = wf.runningJobs.get(id);
+			wf.queueJobs.put(id, job);
+			wf.runningJobs.remove(id);
+	
+			// Publish a second message to the Job MQ
+			String jobInfo = createJobInfo(job.jobId, job.jobCommand);
+			mq.pushMQ(jobInfo);						
+		}
 	}
 	
 	

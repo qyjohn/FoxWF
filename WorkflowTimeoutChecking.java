@@ -34,7 +34,7 @@ public class WorkflowTimeoutChecking extends Thread
 						// Check if there is a timeout
 						if (job_runtime > job_timeout)
 						{
-							System.out.println(job.jobId + "\t timeout....");
+							System.out.println(job.jobId + "\t" + job_timeout + "\t" + job_runtime + "\t timeout....");
 						}
 					}
 				}				

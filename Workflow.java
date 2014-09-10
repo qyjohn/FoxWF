@@ -16,6 +16,7 @@ public class Workflow
 {
 
 	HashMap<String, WorkflowJob> initialJobs, queueJobs, runningJobs, completeJobs;
+	HashMap<String, Integer> timeoutMap;
 	String projectDir;
 	int timeout;
 	
@@ -37,7 +38,17 @@ public class Workflow
 			completeJobs = new HashMap<String, WorkflowJob>();
 
 			projectDir = dir;
-			String timePath = "file:///" + projectDir + "/timeout.xml";	// timeout definition for jobs
+			
+			timeoutMap = new HashMap<String, Integer>();
+			String timeoutFile = projectDir + "/timeout.xml";	// timeout definition for jobs
+			File f = new File(timeoutFile);
+			if (f.exists())
+			{
+				String timeout_definition_file_path = "file:///" + projectDir + "/timeout.xml";		// workflow DAG
+				Document timeout_doc = parseDocument(timeout_definition_file_path);
+				parseTimeout(timeout_doc);
+			}
+			
 			String fullPath = "file:///" + projectDir + "/dag.xml";		// workflow DAG
 			Document job_doc = parseDocument(fullPath);
 			parseWorkflow(job_doc);			
@@ -62,6 +73,30 @@ public class Workflow
 		return document;
 	}
 	
+	/**
+	 *
+	 * parse job timeout definitions
+	 *
+	 */
+	 
+	public void parseTimeout(Document doc)
+	{
+		List<Element> jobs = doc.getRootElement().elements("job");
+		for (Element job : jobs)
+		{
+			try
+			{
+				String name = job.attribute("name").getValue();
+				Integer time = new Integer(job.attribute("timeout").getValue());
+				timeoutMap.put(name, time);				
+			} catch (Exception e)
+			{
+				System.out.println(e.getMessage());
+				e.printStackTrace();
+			}
+		}
+		
+	}
 	
 	/**
 	 *
@@ -117,6 +152,12 @@ public class Workflow
 		String name = job.attribute("name").getValue();
 		
 		WorkflowJob wlj = new WorkflowJob(id, name, timeout);
+		if (timeoutMap.containsKey(name))
+		{
+			// Customer define timeout available for this particular job
+			wlj.timeout = timeoutMap.get(name).intValue();
+		}
+//		WorkflowJob wlj = new WorkflowJob(id, name, timeout);
 		Element args = job.element("argument");
 		for ( int i = 0, size = args.nodeCount(); i < size; i++ )
 		{
