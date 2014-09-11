@@ -1,4 +1,5 @@
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class WorkflowTimeoutChecking extends Thread
 {
@@ -22,8 +23,11 @@ public class WorkflowTimeoutChecking extends Thread
 				// Traverse through all workflows
 				for (String key1 : allWorkflows.keySet()) 
 				{
+					// Get the current workflow scheduler
+					WorkflowScheduler wfc = allWorkflows.get(key1);
 					// Get the running jobs in the workflow
-					HashMap<String, WorkflowJob> runningJobs = allWorkflows.get(key1).wf.runningJobs;
+					HashMap<String, WorkflowJob> runningJobs = wfc.wf.runningJobs;
+					HashSet<String> offending_jobs = new HashSet<String>();
 					// Traverse through all running jobs
 					for (String key2 : runningJobs.keySet())
 					{
@@ -35,7 +39,13 @@ public class WorkflowTimeoutChecking extends Thread
 						if (job_runtime > job_timeout)
 						{
 							System.out.println(job.jobId + "\t" + job_timeout + "\t" + job_runtime + "\t timeout....");
+							offending_jobs.add(job.jobId);
 						}
+					}
+					
+					for (String jobId : offending_jobs)
+					{
+						wfc.handleJobTimeout(jobId);
 					}
 				}				
 				sleep(10000);	// sleep 10 seconds

@@ -179,6 +179,8 @@ public class WorkflowScheduler
 			// Publish a second message to the Job MQ
 			String jobInfo = createJobInfo(job.jobId, job.jobCommand);
 			mq.pushMQ(jobInfo);						
+
+			System.out.println(uuid + ":\t" + id + " is now re-submit for execution.");
 		}
 	}
 	
