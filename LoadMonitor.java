@@ -5,21 +5,74 @@
  */
  
 import java.lang.management.*;
+import javax.management.*;
+import java.io.*;
+import java.util.StringTokenizer;
 
 public class LoadMonitor
 {
 
 
+    public static double[] sysUsage (int seconds, String dev) throws Exception 
+    {          
+    	Runtime runtime = Runtime.getRuntime();
+        BufferedReader reader = null;
+        StringTokenizer st;
+        String  command, infoLine, loadString = "0.00";
+		double[] load = new double[3]; 	// concurrent threads, cpu load, iops
+
+        try 
+        {
+			// Concurrent threads
+			OperatingSystemMXBean mbean = ManagementFactory.getOperatingSystemMXBean();
+			load[0] = mbean.getSystemLoadAverage();
+        
+			// Parsing mpstat
+            command = "mpstat 1 1";
+            reader = new BufferedReader(new InputStreamReader(runtime.exec(command).getInputStream()));
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            infoLine = reader.readLine().trim();
+            st = new StringTokenizer(infoLine, " ");
+            while (st.hasMoreTokens())
+            {
+	            loadString = st.nextToken();
+            }
+	        load[1] = 100 - Double.parseDouble(loadString);
+			
+			// Parsing iostat
+            command = "iostat -d 1 2 "+ dev;
+            reader = new BufferedReader(new InputStreamReader(runtime.exec(command).getInputStream()));
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            reader.readLine();
+            infoLine = reader.readLine().substring(8).trim();
+            st = new StringTokenizer(infoLine, " ");
+            loadString = st.nextToken();
+	        load[2] = Double.parseDouble(loadString);
+        } catch (Exception e)
+        {
+	        
+        }    
+        
+        return load;
+    }
+
 	public static void main(String[] args)
 	{
-		int	   period = 1000; // default 1 second
+		int	   period = 1; // default 1 second
+		int    sleep = 1000;
 		long   unixTime;
-		double loadAvg;
-		OperatingSystemMXBean mbean = ManagementFactory.getOperatingSystemMXBean();
+		double[] load;
+		String dev = "xvdf";
 		
 		try
 		{
-			period = 1000 * Integer.parseInt(args[0]);	// The first argument is the sample period, default to 1 second.
+			dev = args[0];
 		} catch (Exception e)	{}
 		
 		while (true)
@@ -27,9 +80,9 @@ public class LoadMonitor
 			try
 			{
 				unixTime = System.currentTimeMillis() / 1000L;
-				loadAvg = mbean.getSystemLoadAverage();
-				System.out.println(unixTime + "\t" + loadAvg);
-				Thread.sleep(period);
+				load = LoadMonitor.sysUsage(period, dev);
+				System.out.println(unixTime + "\t" + load[0] + "\t" + load[1] + "\t" + load[2]);
+				Thread.sleep(sleep);
 			} catch (Exception e)
 			{
 				System.out.println(e.getMessage());
