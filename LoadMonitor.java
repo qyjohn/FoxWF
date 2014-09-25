@@ -19,7 +19,7 @@ public class LoadMonitor
         BufferedReader reader = null;
         StringTokenizer st;
         String  command, infoLine, loadString = "0.00";
-		double[] load = new double[3]; 	// concurrent threads, cpu load, iops
+		double[] load = new double[5]; 	// concurrent threads, cpu load, iops, read, write
 
         try 
         {
@@ -54,6 +54,10 @@ public class LoadMonitor
             st = new StringTokenizer(infoLine, " ");
             loadString = st.nextToken();
 	        load[2] = Double.parseDouble(loadString);
+            loadString = st.nextToken();
+	        load[3] = Double.parseDouble(loadString);
+            loadString = st.nextToken();
+	        load[4] = Double.parseDouble(loadString);
         } catch (Exception e)
         {
 	        
@@ -81,7 +85,7 @@ public class LoadMonitor
 			{
 				unixTime = System.currentTimeMillis() / 1000L;
 				load = LoadMonitor.sysUsage(period, dev);
-				System.out.println(unixTime + "\t" + load[0] + "\t" + load[1] + "\t" + load[2]);
+				System.out.println(unixTime + "\t" + load[0] + "\t" + load[1] + "\t" + load[2] + "\t" + load[3] + "\t" + load[4]);
 				Thread.sleep(sleep);
 			} catch (Exception e)
 			{
