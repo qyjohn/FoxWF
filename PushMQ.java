@@ -35,23 +35,10 @@ public class PushMQ
 		{
 			channel.basicPublish("", mq_name, MessageProperties.PERSISTENT_BASIC, msg.getBytes());
 			channel.txCommit();
-//			channel.basicPublish("", mq_name, null, msg.getBytes());
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-		}
-	}
-	
-	
-	public static void main(String[] args)
-	{
-		String msg;
-		PushMQ pj = new PushMQ("localhost", FoxParam.SIMPLE_WORKFLOW_JOB_MQ);
-		
-		while (true)
-		{
-			pj.pushMQ("<job project='1d106dda-fc5a-4d60-bae6-5d12fcb703b9' id='ID000970' path='/data/Test_6.0_01' />");
 		}
 	}
 }

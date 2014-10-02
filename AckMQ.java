@@ -54,17 +54,21 @@ public class AckMQ extends Thread
 	 
 	public void run()
 	{
+		String ackString;
+		String project, jobId, status, worker;
+		Element ack;
+		
 		while (true)
 		{
 			try
 			{
 				// Receive ACK message 
-				String ackString = amq.pullMQ();
-				Element ack = DocumentHelper.parseText(ackString).getRootElement();
-				String project = ack.attribute("project").getValue();
-				String jobId   = ack.attribute("id").getValue();
-				String status  = ack.attribute("status").getValue();
-				String worker  = ack.attribute("worker").getValue();
+				ackString = amq.pullMQ();
+				ack = DocumentHelper.parseText(ackString).getRootElement();
+				project = ack.attribute("project").getValue();
+				jobId   = ack.attribute("id").getValue();
+				status  = ack.attribute("status").getValue();
+				worker  = ack.attribute("worker").getValue();
 				
 				// An ACK message indicates either the "running" or "complete" status of a particular job
 				WorkflowScheduler scheduler = allWorkflows.get(project);

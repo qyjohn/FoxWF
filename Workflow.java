@@ -15,10 +15,13 @@ import org.dom4j.io.SAXReader;
 public class Workflow
 {
 
-	HashMap<String, WorkflowJob> initialJobs, queueJobs, runningJobs, completeJobs;
+	HashMap<String, WorkflowJob> initialJobs, queueJobs, runningJobs;
+//	completeJobs;
 	HashMap<String, Integer> timeoutMap;
 	String projectDir;
 	int timeout;
+	SAXReader reader;
+
 	
 	/**
 	 *
@@ -29,13 +32,15 @@ public class Workflow
 	public Workflow(String dir, int t)
 	{
 		timeout = t;
+		reader = new SAXReader();
+		
 		try
 		{
 			// Initialize the HashMap for workflow jobs
 			initialJobs = new HashMap<String, WorkflowJob>();
 			queueJobs = new HashMap<String, WorkflowJob>();
 			runningJobs = new HashMap<String, WorkflowJob>();
-			completeJobs = new HashMap<String, WorkflowJob>();
+//			completeJobs = new HashMap<String, WorkflowJob>();
 
 			projectDir = dir;
 			
@@ -47,11 +52,13 @@ public class Workflow
 				String timeout_definition_file_path = "file:///" + projectDir + "/timeout.xml";		// workflow DAG
 				Document timeout_doc = parseDocument(timeout_definition_file_path);
 				parseTimeout(timeout_doc);
+				timeout_doc = null;
 			}
 			
 			String fullPath = "file:///" + projectDir + "/dag.xml";		// workflow DAG
 			Document job_doc = parseDocument(fullPath);
-			parseWorkflow(job_doc);			
+			parseWorkflow(job_doc);	
+			job_doc = null;		
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());	
@@ -67,7 +74,7 @@ public class Workflow
          
 	public Document parseDocument(String fullPath) throws Exception 
 	{
-		SAXReader reader = new SAXReader();
+//		SAXReader reader = new SAXReader();
 		URL url = new URL(fullPath);
 		Document document = reader.read(url);
 		return document;
@@ -95,7 +102,7 @@ public class Workflow
 				e.printStackTrace();
 			}
 		}
-		
+		jobs = null;
 	}
 	
 	/**
@@ -117,6 +124,7 @@ public class Workflow
 		{
 			prepareChild(child);
 		}
+		jobs = null;
 	}
 	
 	
