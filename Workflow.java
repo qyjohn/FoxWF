@@ -20,7 +20,10 @@ public class Workflow
 	HashMap<String, Integer> timeoutMap;
 	String projectDir;
 	int timeout;
+	
 	SAXReader reader;
+	Document document;
+	URL url;
 
 	
 	/**
@@ -50,15 +53,16 @@ public class Workflow
 			if (f.exists())
 			{
 				String timeout_definition_file_path = "file:///" + projectDir + "/timeout.xml";		// workflow DAG
-				Document timeout_doc = parseDocument(timeout_definition_file_path);
-				parseTimeout(timeout_doc);
-				timeout_doc = null;
+				parseDocument(timeout_definition_file_path);
+//				parseTimeout(document);
+				parseTimeout();
 			}
 			
 			String fullPath = "file:///" + projectDir + "/dag.xml";		// workflow DAG
-			Document job_doc = parseDocument(fullPath);
-			parseWorkflow(job_doc);	
-			job_doc = null;		
+			parseDocument(fullPath);
+//			parseWorkflow(document);	
+			parseWorkflow();	
+//			job_doc = null;		
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());	
@@ -72,12 +76,13 @@ public class Workflow
 	 *
 	 */
          
-	public Document parseDocument(String fullPath) throws Exception 
+//	public Document parseDocument(String fullPath) throws Exception 
+	public void parseDocument(String fullPath) throws Exception 
 	{
 //		SAXReader reader = new SAXReader();
-		URL url = new URL(fullPath);
-		Document document = reader.read(url);
-		return document;
+		url = new URL(fullPath);
+		document = reader.read(url);
+//		return document;
 	}
 	
 	/**
@@ -86,9 +91,10 @@ public class Workflow
 	 *
 	 */
 	 
-	public void parseTimeout(Document doc)
+//	public void parseTimeout(Document doc)
+	public void parseTimeout()
 	{
-		List<Element> jobs = doc.getRootElement().elements("job");
+		List<Element> jobs = document.getRootElement().elements("job");
 		for (Element job : jobs)
 		{
 			try
@@ -111,10 +117,11 @@ public class Workflow
 	 *
 	 */
 	 
-	public void parseWorkflow(Document doc)
+//	public void parseWorkflow(Document doc)
+	public void parseWorkflow()
 	{
-		List<Element> jobs = doc.getRootElement().elements("job");
-		List<Element> children = doc.getRootElement().elements("child");
+		List<Element> jobs = document.getRootElement().elements("job");
+		List<Element> children = document.getRootElement().elements("child");
 
 		for(Element job : jobs) 
 		{
@@ -125,6 +132,7 @@ public class Workflow
 			prepareChild(child);
 		}
 		jobs = null;
+		children = null;
 	}
 	
 	
@@ -167,17 +175,21 @@ public class Workflow
 		}
 //		WorkflowJob wlj = new WorkflowJob(id, name, timeout);
 		Element args = job.element("argument");
+		
+		Node node;
+		Element e;
+		StringTokenizer st;
 		for ( int i = 0, size = args.nodeCount(); i < size; i++ )
 		{
-			Node node = args.node(i);
+			node = args.node(i);
 			if ( node instanceof Element ) 
 			{
-                Element e = (Element) node;
+                e = (Element) node;
                 wlj.addArgument(e.attribute("file").getValue());
             }
             else
             {
-	            StringTokenizer st = new StringTokenizer(node.getText().trim());
+	            st = new StringTokenizer(node.getText().trim());
 				while (st.hasMoreTokens()) 
 				{
 					wlj.addArgument(st.nextToken());

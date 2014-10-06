@@ -46,8 +46,8 @@ public class FoxServer
 	    	prj.start();
 	    	
 	    	// Checking job timeouts
-	    	WorkflowTimeoutChecking timeout_checking = new WorkflowTimeoutChecking(allWorkflows, job_timeout);
-	    	timeout_checking.start();
+//	    	WorkflowTimeoutChecking timeout_checking = new WorkflowTimeoutChecking(allWorkflows, job_timeout);
+//	    	timeout_checking.start();
 
 			while (true)
 			{
