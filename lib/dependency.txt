@@ -1,1 +1,10 @@
-sudo apt-get install sysstat
+deb http://www.rabbitmq.com/debian/ testing main
+
+wget http://www.rabbitmq.com/rabbitmq-signing-key-public.asc
+sudo apt-key add rabbitmq-signing-key-public.asc
+
+sudo apt-get update
+sudo apt-get install openjdk-7-jdk
+sudo apt-get install apache2 php5 mysql-server
+sudo apt-get install sysstat nfs-kernel-server rabbitmq-server 
+sudo apt-get install mdadm

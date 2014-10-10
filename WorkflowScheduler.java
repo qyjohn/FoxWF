@@ -222,6 +222,10 @@ public class WorkflowScheduler
 				}
 			}
 			
+			// Delete this job from initialJobs
+			wf.initialJobs.remove(id);
+			
+			
 			// Check if the workflow is completed
 			if ((initialSet.size() == 0) && (pendingSet.size() == 0) && (runningSet.size() == 0))
 			{				

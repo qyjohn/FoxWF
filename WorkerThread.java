@@ -12,7 +12,6 @@ public class WorkerThread extends Thread
 	PushMQ amq;
 	
 	
-//	public WorkerThread(PushMQ mq, String w, HashSet<String> running, int max_thread, String proj, String path, String id, String command)
 	public WorkerThread(PushMQ mq, String w, HashSet<String> running, int max_thread, Element job)
 	{
 		amq = mq;
@@ -24,16 +23,8 @@ public class WorkerThread extends Thread
 		projectPath = job.attribute("path").getValue();
 		jobId = job.attribute("id").getValue();
 		jobCommand = job.element("command").getText().trim();
-
-/*
-		project = proj;
-		projectPath = path;
-		jobId = id;
-		jobCommand = command;
-*/		
 		fullCommand = projectPath + "/bin/" + jobCommand;
 		workDir = projectPath + "/workdir";
-		
 	}
 	
 	/**
@@ -45,7 +36,8 @@ public class WorkerThread extends Thread
 	 *
 	 */
 	 
-	public synchronized void exec(String path, String command)
+//	public synchronized void exec(String path, String command)
+	public void exec(String path, String command)
 	{
 		try
 		{
@@ -67,15 +59,19 @@ public class WorkerThread extends Thread
 			in.close();
 
 			p.waitFor();
-			runningJobs.remove(jobId);
+			removeJob(jobId);
+//			runningJobs.remove(jobId);
 			p=null;
-//			System.out.println(result);
 		} catch (Exception e)
 		{
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
-		
+	}
+	
+	public synchronized void removeJob(String jobId)
+	{
+		runningJobs.remove(jobId);		
 	}
 	
 	
@@ -85,10 +81,6 @@ public class WorkerThread extends Thread
 		
 		try
 		{			
-			// Send out ACK message, indicating that this job is running.
-//			ackInfo = "<ack project='" + project +"' id='" + jobId + "' status='running' worker='" + worker + "'/>";
-//			amq.pushMQ(ackInfo);
-	
 			System.out.println(project + ":\t" + jobId);
 			System.out.println(projectPath + "/bin/" + jobCommand);
 			exec(projectPath, jobCommand);
