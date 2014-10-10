@@ -81,8 +81,8 @@ public class WorkerThread extends Thread
 		
 		try
 		{			
-			System.out.println(project + ":\t" + jobId);
-			System.out.println(projectPath + "/bin/" + jobCommand);
+//			System.out.println(project + ":\t" + jobId);
+//			System.out.println(projectPath + "/bin/" + jobCommand);
 			exec(projectPath, jobCommand);
 
 			// Send out ACK message, indicating that this job is complete.

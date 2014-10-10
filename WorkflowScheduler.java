@@ -87,7 +87,7 @@ public class WorkflowScheduler
 	{
 		if (pendingSet.contains(id))
 		{
-			System.out.println(uuid + ":\t" + id + " is running on worker " + worker + ".");
+//			System.out.println(uuid + ":\t" + id + " is running on worker " + worker + ".");
 
 			pendingSet.remove(id);
 			runningSet.add(id);
@@ -126,7 +126,7 @@ public class WorkflowScheduler
 				if (childJob.ready)
 				{
 					// No more pending input files, this job is now ready to go
-					System.out.println(uuid + ":\t" + childJob.jobId + " is now ready to go. Dispatching...");
+//					System.out.println(uuid + ":\t" + childJob.jobId + " is now ready to go. Dispatching...");
 					dispatchJob(childJob.jobId);
 				}
 			}
@@ -144,7 +144,7 @@ public class WorkflowScheduler
 				runningSet = null;
 				wf = null;
 				
-				System.out.println(uuid + ":\t" +  "[COMPLETED]");
+//				System.out.println(uuid + ":\t" +  "[COMPLETED]");
 				database.update_workflow(uuid, "completed");
 			}						
 		}		
