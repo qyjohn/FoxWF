@@ -60,7 +60,6 @@ public class PrjMQ extends Thread
 		    	String uuid = UUID.randomUUID().toString();
 		    	database.add_workflow(uuid, name, path);
 				WorkflowScheduler scheduler = new WorkflowScheduler(database, uuid, jmq, path, timeout);
-//				allWorkflows.put(uuid, scheduler);
 				addWorkflow(uuid, scheduler);
 				database.update_workflow(uuid, "started");
 				scheduler.initialDispatch();

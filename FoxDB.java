@@ -79,6 +79,7 @@ public class FoxDB
 
 		// Update DB
 		execute_update(sql);
+		sql = null;
 	}
 	
 	public synchronized void update_workflow(String uuid, String status)
@@ -88,6 +89,7 @@ public class FoxDB
 
 		// Update DB
 		execute_update(sql);	
+		sql = null;		
 	}
 	
 	
@@ -99,6 +101,7 @@ public class FoxDB
 
 		// Update DB
 		execute_update(sql);
+		sql = null;		
 	}
 	
 
@@ -109,6 +112,7 @@ public class FoxDB
 		
 		// Update DB
 		execute_update(sql);
+		sql = null;
 	}
 
 	
@@ -119,5 +123,6 @@ public class FoxDB
 
 		// Update DB
 		execute_update(sql);
+		sql = null;
 	}
 }
