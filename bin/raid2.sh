@@ -10,3 +10,6 @@ chown -R mfs:mfs /mfshdd
 mount /dev/md0 /mfshdd
 chown -R mfs:mfs /mfshdd
 
+echo "MFSCHUNKSERVER_ENABLE=true" | tee --append /etc/default/moosefs-ce-chunkserver
+service moosefs-ce-chunkserver start
+mfsmount /data -H mfsmaster
