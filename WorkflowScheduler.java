@@ -35,7 +35,7 @@ public class WorkflowScheduler
 	}
 	
 	
-	public void initialDispatch()
+	public synchronized void initialDispatch()
 	{
 		HashSet<String> queueSet = new HashSet<String>();
 		LinkedList<String>	pendingPush = new LinkedList<String>();
